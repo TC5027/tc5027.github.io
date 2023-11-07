@@ -36,3 +36,38 @@ Due to the ```jle .L2``` instruction a jump is performed and in our sketch, fetc
 To solve this, there is a dedicated component inside CPUs, the BPU. It takes as input an instruction pointer and outputs a prediction on if there is a branch at this address, and if yes where does it leads. This happens very early at the fetch state.
 
 ## The experiment
+
+```
+mov $CACHE_LINE_ADDR, %rsi
+clflush (%rsi)
+sfence
+lfence
+xor %rdi, %rdi
+jz END_LABEL
+nop
+...
+nop
+mov (%rsi), %rax
+END_LABEL:
+
+measure CACHE_LINE_ADDR access time
+```
+
+This program helps us identify if the branch predictor failed in its prediction. What happens is we flush a line out of cache, the ```xor %rdi, %rdi``` sets ZF flag to 1 which implies the conditional jump to go to ```END_LABEL```.
+
+* If the branch predictor predicted correctly then ```mov (%rsi), %rax``` is not executed and the access time is high because it was previously evicted from cache
+* If the branch predictor predicted wrongly + there is not too many ```nop```, then ```mov (%rsi), %rax``` is executed and then backrolled, but not its side effect of caching, so the access time is lower
+
+Considering our sketch pipeline this could never happen as the backroll should happen before the execution step but in reality there is more agresive speculative executions in CPUs to get the best perf.
+
+Adding ```nop```s, we can deduce how many instructions can be wrongly executed due to branch misprection before being backrolled.
+
+## AMD BTB
+
+Inside BPU there is a cache called Branch Target Buffer, storing the previously taken branches' destination. For AMD's BTB the behaviour is if there is no entry in the BTB for a conditional branch, it will always be predicted as not taken.
+
+The idea is to first fill the whole BTB with unconditional branches so that there is no entry left, and then run our experiment, the branch will be predicted as not taken and the access time at the end should be low.
+
+## Result
+
+I rented a vps with AMD EPYC 7543 and using [KTF](https://github.com/KernelTestFramework/ktf) (simple kernel suited for this kind of experiments) I managed to execute wrongly 8 instructions with a misprediction rate of 99%
