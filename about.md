@@ -6,4 +6,4 @@ permalink: /about/
 
 Sharing experiments
 
-Graduated from Grenoble-INP ENSIMAG, now working in block storage team @ Scaleway.
+Graduated from Grenoble-INP ENSIMAG, ex Scaleway, now @ Squarepoint.
