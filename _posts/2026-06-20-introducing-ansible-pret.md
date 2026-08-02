@@ -61,4 +61,8 @@ ansible-pret version-transition -dir {} absent mounted mount_state
 ansible-pret version-end -dir {} absent mount_state
 ```
 
-Paired with the daily converge mechanism and use of ansible-pret to analyze iteration inside the CI and register it once validated, it turned out to be quite effective, providing clean lifecycle for mounts. This idea could be applied to other configuration like packages etc. If you've read this post 'til the end, thank you, I truly appreciate it!
+Paired with the daily converge mechanism and use of ansible-pret to analyze iteration inside the CI and register it once validated, it turned out to be quite effective, providing clean lifecycle for mounts. This idea could be applied to other configuration like packages etc. but requires a specific execution pattern.
+
+## Closing
+
+Ansible inventory is clearly not a first-class citizen when it comes to being a safe and scalable source of truth at scale, see all the non native mechanism (also impacting execution) that should be added to harden it! While it may be a decent solution for small scale projects there is a point where you should consider additional safety like ansible-pret or move your source of truth to a more robust and feature-rich tool, maybe Netbox ? an API powered by a relational database with well defined schema ? You could even consider several sources that would best fit each element of your configuration, merged together producing an ephemeral Ansible inventory safe to use for your playbooks. I'm still searching for such open source solution encapsulating features developed in ansible-pret...
